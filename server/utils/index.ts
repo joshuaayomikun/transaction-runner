@@ -60,3 +60,10 @@ export const generateAccountNumber = async () => {
     return newnumber
 
 }
+
+export const hashedPassword = async(password : string) => {
+    const salt = await bcrypt.genSalt(10);
+    const newpassword = await bcrypt.hash(password, salt);
+
+    return newpassword
+}

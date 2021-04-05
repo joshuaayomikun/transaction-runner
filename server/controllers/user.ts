@@ -1,11 +1,9 @@
 import { Request, Response } from "express";
-import { getUserbyEmailOrPhone, authenticateUser, generateAccountNumber } from "../utils";
+import { getUserbyEmailOrPhone, authenticateUser, generateAccountNumber, hashedPassword } from "../utils";
 import Models from '../models'
 import { UserAccountAttributes, UserAccountInstance } from "../models/useraccount";
-import bcrypt from 'bcrypt'
 import sendMail from "../mail";
-import { Model, ModelCtor, Op } from "sequelize";
-import { IRequest } from "../interfaces";
+import { Model, Op } from "sequelize";
 import { sign } from 'jsonwebtoken'
 const { UserAccount, Transaction } = Models
 
@@ -23,8 +21,7 @@ export const createUser = async (req: Request, res: Response) => {
         userInput.otp = String(Math.floor(100000 + Math.random() * 900000))
         userInput.otpperiod = 20
         userInput.otpdatestart = new Date()
-        const salt = await bcrypt.genSalt(10);
-        userInput.password = await bcrypt.hash(userInput.password, salt);
+        userInput.password = await hashedPassword(userInput.password || "")
         const newUser: UserAccountInstance = await UserAccount.create(userInput)
         // newUser.save()
         if (typeof newUser !== "undefined") {
@@ -217,6 +214,39 @@ export const login = async (req: Request, res: Response) => {
     }
 }
 
+export const changePassowrd = async (req: Request, res: Response) => {
+    try {
+        const { email, password, newpassword } = req.body
+        const user: UserAccountInstance = await getUserbyEmailOrPhone({ email })
+        if (user !== null) {
+            const confPass = await authenticateUser(password, user.password)
+            const confPass2 = await authenticateUser(newpassword, user.password)
+            if (confPass2) {
+                res.status(400).send({
+                    message: "You can't use old password as your new password"
+                })
+                return
+            } else if (confPass) {
+                const newpword = await hashedPassword(newpassword)
+                UserAccount.update({ password: newpword }, {
+                    where: {
+                        email
+                    }
+                })
+            }
+        }
+        res.status(400).send({
+            message: "Can't change password"
+        })
+        return
+    } catch (err) {
+        res.status(500).send({
+            message: err.message || "Some error occurred in loging in"
+        })
+        return
+    }
+}
+
 export const forgotPassword = async (req: Request, res: Response) => {
     try {
         const userInput: UserAccountAttributes = req.body
@@ -267,8 +297,7 @@ export const resetpassword = async (req: Request, res: Response) => {
         if (typeof user !== "undefined") {
             const timeDiff = (date.getTime() - user.otpdatestart.getTime()) / (60 * 1000)
             if (timeDiff <= user.otpperiod) {
-                const salt = await bcrypt.genSalt(10);
-                const password = await bcrypt.hash(userInput.password, salt);
+                const password = await hashedPassword(userInput.password || "");
                 const updateAccount: [number, Model[]] = await UserAccount.update({ password, otpperiod: 0 }, {
                     where: {
                         email: userInput.email
@@ -307,9 +336,9 @@ export const firstTimeLogin = async (req: Request, res: Response) => {
             })
             return
         }
-        else if (!user.firstname) {
+        else if (!user.firsttimelogin) {
             res.status(400).send({
-                message: "this API is just for first time users who haven;t update their credentials"
+                message: "this API is just for first time users who haven't update their credentials"
             })
             return
         }
@@ -336,7 +365,7 @@ export const firstTimeLogin = async (req: Request, res: Response) => {
                         userId: user.id,
                         desscription: 'Opening account',
                         transactiotype: 'credit',
-                        balanceAsAtTransfer: user.balance
+                        balanceAsAtTransfer: userInput.balance
                     })
                 }
                 await sendMail({

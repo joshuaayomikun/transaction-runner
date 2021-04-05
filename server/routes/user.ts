@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response, Router } from "express"
-import { confirmOTP, createUser, firstTimeLogin, forgotPassword, login, resendOTP, resetpassword } from "../controllers"
+import { changePassowrd, confirmOTP, createUser, firstTimeLogin, forgotPassword, login, resendOTP, resetpassword } from "../controllers"
 import { body, check, validationResult } from 'express-validator'
 import { token } from "morgan"
 const router = Router()
@@ -42,6 +42,20 @@ const User = (app: any) => {
             next()
         },
         login)
+    router.post("/changePassowrd",
+        [
+            body("email").isEmail(),
+            body("password").isLength({ min: 5 }),
+            body("newpassword").isLength({ min: 5 })
+        ],
+        (req: Request, res: Response, next: NextFunction) => {
+            const errors = validationResult(req)
+            if (!errors.isEmpty()) {
+                return res.status(400).json({ errors: errors.array() });
+            }
+            next()
+        },
+        changePassowrd)
     router.post("/forgotpassword", forgotPassword)
     router.post("/resetpassowrd", resetpassword)
     router.put("/:userId/continueregistration",
@@ -50,14 +64,14 @@ const User = (app: any) => {
             body("email").isEmail(),
             body("pin").isLength({ min: 4, max: 4 }),
             body("password").isLength({ min: 5 }),
-            body("balance").custom((value, {req , path}) => {
-                if(value !== req.body.openingbalance) {
+            body("balance").custom((value, { req, path }) => {
+                if (value !== req.body.openingbalance) {
                     throw new Error("Balance is not same as opening balance");
-                    
-                } else{
+
+                } else {
                     return value
                 }
-            } )
+            })
         ],
         (req: Request, res: Response, next: NextFunction) => {
             const errors = validationResult(req)

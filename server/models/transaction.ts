@@ -1,6 +1,9 @@
 import { Sequelize, ModelCtor } from 'sequelize-typescript';
 import { DOUBLE, STRING } from 'sequelize';
 import { IModel } from '../interfaces';
+import { UUID } from 'sequelize';
+import { UUIDV4 } from 'sequelize';
+import { DATE } from 'sequelize';
 
 export interface TransactionsAttributes {
     amount ? : number;
@@ -11,7 +14,7 @@ export interface TransactionsAttributes {
 }
 
 export interface TransactionsInstance {
-    id: number;
+    id: string;
     createdAt: Date;
     updatedAt: Date;
 
@@ -29,10 +32,25 @@ export type Overwrite<T, U> = Pick<T, Diff<keyof T, keyof U>> & U;
   interface AppModel extends Overwrite<ModelCtor, any> {};
 const TransactionFactory = (sequelize: Sequelize) => {
     var Transaction: AppModel = sequelize.define('Transaction', {
+        id: {
+            allowNull: false,
+            primaryKey: true,
+            type: UUID,
+            defaultValue: UUIDV4
+        },
         amount: DOUBLE,
         description: STRING,
         balanceAfterTransaction: DOUBLE,
-        transactiontype: STRING(6)
+        transactiontype: STRING(6),
+        createdAt: {
+            allowNull: false,
+            type: DATE
+        },
+
+        updatedAt: {
+            allowNull: false,
+            type: DATE
+        }
     });
 
     Transaction.associate = function(models: IModel) {
