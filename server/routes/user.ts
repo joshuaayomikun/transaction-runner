@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response, Router } from "express"
 import { changePassowrd, confirmOTP, createUser, firstTimeLogin, forgotPassword, login, resendOTP, resetpassword } from "../controllers"
 import { body, check, validationResult } from 'express-validator'
-import { token } from "morgan"
 const router = Router()
 const User = (app: any) => {
     router.post('/createuser',
@@ -28,7 +27,16 @@ const User = (app: any) => {
             }
             next()
         }, confirmOTP)
-    router.post("/resendverification", resendOTP)
+    router.post("/resendverification",
+        body("email").isEmail(),
+        (req: Request, res: Response, next: NextFunction) => {
+            const errors = validationResult(req)
+            if (!errors.isEmpty()) {
+                return res.status(400).json({ errors: errors.array() });
+            }
+            next()
+        },
+        resendOTP)
     router.post("/login",
         [
             body("email").isEmail(),
@@ -56,8 +64,26 @@ const User = (app: any) => {
             next()
         },
         changePassowrd)
-    router.post("/forgotpassword", forgotPassword)
-    router.post("/resetpassowrd", resetpassword)
+    router.post("/forgotpassword", body("email").isEmail(),
+        (req: Request, res: Response, next: NextFunction) => {
+            const errors = validationResult(req)
+            if (!errors.isEmpty()) {
+                return res.status(400).json({ errors: errors.array() });
+            }
+            next()
+        }, forgotPassword)
+    router.post("/resetpassowrd",
+        [
+            body("email").isEmail(),
+            body("password").isLength({ min: 5 }),
+        ],
+        (req: Request, res: Response, next: NextFunction) => {
+            const errors = validationResult(req)
+            if (!errors.isEmpty()) {
+                return res.status(400).json({ errors: errors.array() });
+            }
+            next()
+        }, resetpassword)
     router.put("/:userId/continueregistration",
         [
             body("openingbalance").isNumeric(),

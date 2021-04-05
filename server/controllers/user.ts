@@ -252,11 +252,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
         const userInput: UserAccountAttributes = req.body
         userInput.otp = String(Math.floor(100000 + Math.random() * 900000))
         userInput.otpperiod = 20
-        const confirmUser: UserAccountInstance = UserAccount.findOne({
-            where: {
-                email: userInput.email
-            }
-        })
+        const confirmUser: UserAccountInstance = await getUserbyEmailOrPhone(userInput)
 
         if (typeof confirmUser !== "undefined") {
             if (confirmUser.isverified) {
