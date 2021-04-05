@@ -175,7 +175,7 @@ export const login = async (req: Request, res: Response) => {
     try {
         const userInput: UserAccountAttributes = req.body
         const confirmUser: UserAccountInstance = await getUserbyEmailOrPhone(userInput)
-        console.log({ confirmUser, userInput })
+        // console.log({ confirmUser, userInput })
         if (confirmUser !== null) {
             const confPass: boolean = await authenticateUser(userInput.password || "", confirmUser.password)
             let message: string = ""
@@ -315,12 +315,14 @@ export const firstTimeLogin = async (req: Request, res: Response) => {
         }
         else if (confPass) {
             userInput.accountnumber = await generateAccountNumber()
-            const balance = userInput.balance || ""
+            const openingbalance = userInput.openingbalance || 0
+            const balance = openingbalance
             const updatedUser: [number, Model[]] = await UserAccount.update({
                 firsttimelogin: false,
                 accountnumber: userInput.accountnumber,
                 pin: userInput.pin,
-                balance: +balance
+                balance: +balance,
+                openingbalance: +openingbalance
             }, {
                 where: {
                     email: userInput.email

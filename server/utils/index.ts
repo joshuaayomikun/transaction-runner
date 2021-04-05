@@ -40,13 +40,13 @@ export const generateAccountNumber = async () => {
     let newnumber = "0000000001"
     let a = true
     while (a) {
-        const { accountnumber } = await UserAccount.findOne({
+        const user = await UserAccount.findOne({
             attributes: ["accountnumber"],
             where: {
                 accountnumber: newnumber
             }
         })
-        if (typeof accountnumber === "undefined") {
+        if (user === null) {
             a = false
         } else {
             const smallnumber = +newnumber + 1
