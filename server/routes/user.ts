@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response, Router } from "express"
-import { changePassowrd, confirmOTP, createUser, firstTimeLogin, forgotPassword, login, resendOTP, resetpassword } from "../controllers"
+import { changepassword, confirmOTP, createUser, firstTimeLogin, forgotPassword, login, resendOTP, resetpassword } from "../controllers"
 import { body, check, validationResult } from 'express-validator'
 const router = Router()
 const User = (app: any) => {
@@ -40,7 +40,7 @@ const User = (app: any) => {
     router.post("/login",
         [
             body("email").isEmail(),
-            body("passowrd").isLength({ min: 5 })
+            body("password").isLength({ min: 5 })
         ],
         (req: Request, res: Response, next: NextFunction) => {
             const errors = validationResult(req)
@@ -50,7 +50,7 @@ const User = (app: any) => {
             next()
         },
         login)
-    router.post("/changePassowrd",
+    router.put("/changepassword",
         [
             body("email").isEmail(),
             body("password").isLength({ min: 5 }),
@@ -63,7 +63,7 @@ const User = (app: any) => {
             }
             next()
         },
-        changePassowrd)
+        changepassword)
     router.post("/forgotpassword", body("email").isEmail(),
         (req: Request, res: Response, next: NextFunction) => {
             const errors = validationResult(req)
@@ -72,7 +72,7 @@ const User = (app: any) => {
             }
             next()
         }, forgotPassword)
-    router.post("/resetpassowrd",
+    router.put("/resetpassword",
         [
             body("email").isEmail(),
             body("password").isLength({ min: 5 }),

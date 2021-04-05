@@ -10,7 +10,7 @@ const { UserAccount, Transaction } = Models
 export const createUser = async (req: Request, res: Response) => {
     try {
         // console.log({Models})
-        const userInput: UserAccountAttributes = req.body || {}
+        const userInput: UserAccountAttributes = req.body
         const existingUser = await getUserbyEmailOrPhone(userInput)
         if (existingUser) {
             res.status(400).send({
@@ -21,12 +21,12 @@ export const createUser = async (req: Request, res: Response) => {
         userInput.otp = String(Math.floor(100000 + Math.random() * 900000))
         userInput.otpperiod = 20
         userInput.otpdatestart = new Date()
-        userInput.password = await hashedPassword(userInput.password || "")
+        userInput.password = await hashedPassword(userInput.password as string)
         const newUser: UserAccountInstance = await UserAccount.create(userInput)
         // newUser.save()
         if (typeof newUser !== "undefined") {
             await sendMail({
-                to: userInput.email || "",
+                to: userInput.email as string,
                 subject: "Account Creation",
                 text: `Congratutions on your account opening, your otp is ${userInput.otp} copy your otp to your confirmation page to continue. Take note your otp expires after ${userInput.otpperiod} minues. use api/user/${newUser.id}/confirmtoken, send token as the body`
             })
@@ -118,7 +118,7 @@ export const resendOTP = async (req: Request, res: Response) => {
             })
             return
         }
-        const confPass: boolean = await authenticateUser(userInput.password || "", confirmUser.password)
+        const confPass: boolean = await authenticateUser(userInput.password as string, confirmUser.password)
         if (confPass) {
             if (!confirmUser.isverified) {
                 const otp = String(Math.floor(100000 + Math.random() * 900000))
@@ -140,7 +140,7 @@ export const resendOTP = async (req: Request, res: Response) => {
                 })
                 if (user[0] === 1) {
                     await sendMail({
-                        to: userInput.email || "",
+                        to: userInput.email as string,
                         subject: "Resent Token",
                         text: `Congratutions on your account opening, your otp is ${otp} copy your otp to your confirmation page to continue. Take note your otp expires after ${otpperiod} minues. use api/user/${confirmUser.id}/confirmtoken, send token as the body`
                     })
@@ -174,7 +174,7 @@ export const login = async (req: Request, res: Response) => {
         const confirmUser: UserAccountInstance = await getUserbyEmailOrPhone(userInput)
         // console.log({ confirmUser, userInput })
         if (confirmUser !== null) {
-            const confPass: boolean = await authenticateUser(userInput.password || "", confirmUser.password)
+            const confPass: boolean = await authenticateUser(userInput.password as string, confirmUser.password)
             let message: string = ""
             if (confPass) {
                 if (confirmUser.isverified) {
@@ -186,7 +186,7 @@ export const login = async (req: Request, res: Response) => {
                         firstname: confirmUser.firstname,
                         lastname: confirmUser.lastname
                     }
-                    const token = sign(payload, process.env.LOGIN_SECRET || "", {
+                    const token = sign(payload, process.env.TOKEN_SECRET as string, {
                         expiresIn: 20000
                     })
                     res.status(200).send({
@@ -214,7 +214,7 @@ export const login = async (req: Request, res: Response) => {
     }
 }
 
-export const changePassowrd = async (req: Request, res: Response) => {
+export const changepassword = async (req: Request, res: Response) => {
     try {
         const { email, password, newpassword } = req.body
         const user: UserAccountInstance = await getUserbyEmailOrPhone({ email })
@@ -254,16 +254,22 @@ export const forgotPassword = async (req: Request, res: Response) => {
         userInput.otpperiod = 20
         const confirmUser: UserAccountInstance = await getUserbyEmailOrPhone(userInput)
 
-        if (typeof confirmUser !== "undefined") {
+        // console.log({confirmUser})
+        if (confirmUser !== null) {
             if (confirmUser.isverified) {
-                const updateOtp: [number, Model] = UserAccount.update({
+                const updateOtp: [number, Model[]] = await  UserAccount.update({
                     otp: userInput.otp,
                     otpdatestart: new Date(),
-                    otpperiod: userInput.otpperiod
+                    otpperiod: userInput.otpperiod,
+                }, {
+                    where: {
+                        email: userInput.email
+                    }
                 })
+                // console.log({updateOtp})
                 if (updateOtp[0] === 1) {
                     sendMail({
-                        to: userInput.email || "",
+                        to: userInput.email as string,
                         subject: "Forgot Password",
                         text: `your authorization code is ${userInput.otp} with expires after ${userInput.otpperiod} minutes, call api/user/resetpassword send email, token, password as the body`
                     })
@@ -293,7 +299,7 @@ export const resetpassword = async (req: Request, res: Response) => {
         if (typeof user !== "undefined") {
             const timeDiff = (date.getTime() - user.otpdatestart.getTime()) / (60 * 1000)
             if (timeDiff <= user.otpperiod) {
-                const password = await hashedPassword(userInput.password || "");
+                const password = await hashedPassword(userInput.password as string);
                 const updateAccount: [number, Model[]] = await UserAccount.update({ password, otpperiod: 0 }, {
                     where: {
                         email: userInput.email
@@ -325,7 +331,7 @@ export const firstTimeLogin = async (req: Request, res: Response) => {
 
         const userInput: UserAccountAttributes = req.body
         const user: UserAccountInstance = await getUserbyEmailOrPhone(userInput)
-        const confPass = authenticateUser(userInput.password || "", user.password)
+        const confPass = authenticateUser(userInput.password as string, user.password)
         if (!user.isverified) {
             res.status(400).send({
                 message: "oops! You have not been verified yet"
@@ -340,7 +346,7 @@ export const firstTimeLogin = async (req: Request, res: Response) => {
         }
         else if (confPass) {
             userInput.accountnumber = await generateAccountNumber()
-            const openingbalance = userInput.openingbalance || 0
+            const openingbalance = userInput.openingbalance as number
             const balance = openingbalance
             const updatedUser: [number, Model[]] = await UserAccount.update({
                 firsttimelogin: false,
