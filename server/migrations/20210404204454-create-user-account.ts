@@ -28,7 +28,7 @@ export default {
             },
 
             otp: {
-                type: STRING(6)
+                type: STRING
             },
 
             otpdatestart: {
@@ -70,7 +70,7 @@ export default {
             }, 
 
             pin: {
-                type: STRING(4)
+                type: STRING
             },
 
             createdAt: {

@@ -13,12 +13,13 @@ export const createUser = async (req: Request, res: Response) => {
         const userInput: UserAccountAttributes = req.body
         const existingUser = await getUserbyEmailOrPhone(userInput)
         if (existingUser) {
-            res.status(400).send({
+            return res.status(400).send({
                 message: "This number exists"
             })
-            return
+
         }
-        userInput.otp = String(Math.floor(100000 + Math.random() * 900000))
+        let otp = String(Math.floor(100000 + Math.random() * 900000))
+        userInput.otp = await hashedPassword(otp)
         userInput.otpperiod = 20
         userInput.otpdatestart = new Date()
         userInput.password = await hashedPassword(userInput.password as string)
@@ -28,60 +29,49 @@ export const createUser = async (req: Request, res: Response) => {
             await sendMail({
                 to: userInput.email as string,
                 subject: "Account Creation",
-                text: `Congratutions on your account opening, your otp is ${userInput.otp} copy your otp to your confirmation page to continue. Take note your otp expires after ${userInput.otpperiod} minues. use api/user/${newUser.id}/confirmtoken, send token as the body`
+                text: `Congratutions on your account opening, your otp is ${otp} copy your otp to your confirmation page to continue. Take note your otp expires after ${userInput.otpperiod} minues. use api/user/${newUser.id}/confirmtoken, send token as the body`
             })
-            res.status(201).send({ message: 'Account opening successful, check your mail or spam for OTP' })
-            return
+            return res.status(201).send({ message: 'Account opening successful, check your mail or spam for OTP' })
+
         } else {
             res.status(400).send({
                 message: "Something went wrong when creating account please try later"
             })
         }
     } catch (err) {
-        res.status(500).send({
-            message: err.message || "Some error occurred while creating account"
+        return res.status(500).send({
+            message: 'Oops! '+err.message || "Some error occurred while creating account"
         })
-        return
+
     }
 
 }
 
 export const confirmOTP = async (req: Request, res: Response) => {
     try {
-        const token = req.body.token
         const userId = req.params.userId
         const user = await UserAccount.findOne({
             where: {
                 [Op.and]: [{
                     id: userId
                 }, {
-                    otp: token
-                }, {
                     firsttimelogin: true
                 }]
             }
         })
-        const date = new Date
-        const timeDiff = (date.getTime() - user.otpdatestart.getTime()) / (60 * 1000)
-        if (typeof user === "undefined") {
-            res.status(404).send({
+        if (user === null) {
+            return res.status(404).send({
                 message: "User not found"
             })
-            return
+
         }
         else if (user.isverified) {
-            res.status(400).send({
+            return res.status(400).send({
                 message: "Oops! You can't verify because your account has been verified"
             })
-            return
-        }
-        else if (timeDiff > user.otpperiod) {
 
-            res.status(400).send({
-                message: "Oops! This token has expired, call api/user/resendverification and enter your email and password"
-            })
-            return
-        } else {
+        }
+        else {
             const verifiedUser: [number, Model[]] = await UserAccount.update({ isverified: true }, {
                 where: {
                     id: userId
@@ -89,22 +79,22 @@ export const confirmOTP = async (req: Request, res: Response) => {
             })
             // console.log({verifiedUser})
             if (verifiedUser[0] === 1) {
-                res.status(201).send({
+                return res.status(201).send({
                     message: "Congrats! your account has been verified, go to api/user/login and input your name and password"
                 })
-                return
+
             } else {
-                res.status(400).send({
+                return res.status(400).send({
                     message: `Cannot verify user with userId=${userId}`
                 })
-                return
+
             }
         }
     } catch (err) {
-        res.status(400).send({
-            message: err.message || "Some error occurres while confirming the account"
+        return res.status(400).send({
+            message: 'Oops! '+err.message || "Some error occurres while confirming the account"
         })
-        return
+
     }
 }
 
@@ -112,11 +102,11 @@ export const resendOTP = async (req: Request, res: Response) => {
     try {
         const userInput: UserAccountAttributes = req.body
         const confirmUser: UserAccountInstance = await getUserbyEmailOrPhone(userInput)
-        if (typeof confirmUser === "undefined") {
-            res.status(400).send({
+        if (confirmUser === null) {
+            return res.status(400).send({
                 message: "Invalid email or password"
             })
-            return
+
         }
         const confPass: boolean = await authenticateUser(userInput.password as string, confirmUser.password)
         if (confPass) {
@@ -124,7 +114,7 @@ export const resendOTP = async (req: Request, res: Response) => {
                 const otp = String(Math.floor(100000 + Math.random() * 900000))
                 const otpperiod = 20
                 const user: [number, Model[]] = await UserAccount.update({
-                    otp,
+                    otp: await hashedPassword(otp),
                     otpperiod,
                     otpdatestart: new Date()
                 }, {
@@ -144,27 +134,27 @@ export const resendOTP = async (req: Request, res: Response) => {
                         subject: "Resent Token",
                         text: `Congratutions on your account opening, your otp is ${otp} copy your otp to your confirmation page to continue. Take note your otp expires after ${otpperiod} minues. use api/user/${confirmUser.id}/confirmtoken, send token as the body`
                     })
-                    res.status(201).send({
+                    return res.status(201).send({
                         message: "check your mail for verification code"
                     })
                 }
             } else {
-                res.status(400).send({
+                return res.status(400).send({
                     message: "Oops! You cannot resend verification because your account has been verified"
                 })
-                return
+
             }
         } else {
-            res.status(400).send({
+            return res.status(400).send({
                 message: "Oops! Invalid email or password"
             })
-            return
+
         }
     } catch (err) {
-        res.status(500).send({
-            message: err.message || "Some error occurred in resending verification"
+        return res.status(500).send({
+            message: 'Oops! '+err.message || "Some error occurred in resending verification"
         })
-        return
+
     }
 }
 
@@ -182,6 +172,7 @@ export const login = async (req: Request, res: Response) => {
                         message = `For first time login call api/user/${confirmUser.id}/continueregistration send openingbalance, four digit pin, email and password as the body`
                     }
                     const payload = {
+                        userId: confirmUser.id,
                         email: confirmUser.email,
                         firstname: confirmUser.firstname,
                         lastname: confirmUser.lastname
@@ -189,28 +180,28 @@ export const login = async (req: Request, res: Response) => {
                     const token = sign(payload, process.env.TOKEN_SECRET as string, {
                         expiresIn: 20000
                     })
-                    res.status(200).send({
+                    return res.status(200).send({
                         ...payload,
                         token, message
                     })
-                    return
+
                 } else {
-                    res.status(400).send({
+                    return res.status(400).send({
                         message: `Oops! Your account is not verified, input the verification code sent to you as token on sign up via api/user/${confirmUser.id}/confirmtoken or call api/user/resendverification and enter your email and password to resend the verification code `
                     })
-                    return
+
                 }
             }
         }
-        res.status(400).send({
+        return res.status(400).send({
             message: "Oops! Wrong email or password"
         })
-        return
+
     } catch (err) {
-        res.status(500).send({
-            message: err.message || "Some error occurred in loging in"
+        return res.status(500).send({
+            message: 'Oops! '+err.message || "Some error occurred in loging in"
         })
-        return
+
     }
 }
 
@@ -222,10 +213,10 @@ export const changepassword = async (req: Request, res: Response) => {
             const confPass = await authenticateUser(password, user.password)
             const confPass2 = await authenticateUser(newpassword, user.password)
             if (confPass2) {
-                res.status(400).send({
+                return res.status(400).send({
                     message: "You can't use old password as your new password"
                 })
-                return
+
             } else if (confPass) {
                 const newpword = await hashedPassword(newpassword)
                 UserAccount.update({ password: newpword }, {
@@ -235,15 +226,15 @@ export const changepassword = async (req: Request, res: Response) => {
                 })
             }
         }
-        res.status(400).send({
+        return res.status(400).send({
             message: "Can't change password"
         })
-        return
+
     } catch (err) {
-        res.status(500).send({
-            message: err.message || "Some error occurred in loging in"
+        return res.status(500).send({
+            message: 'Oops! '+err.message || "Some error occurred in loging in"
         })
-        return
+
     }
 }
 
@@ -257,8 +248,8 @@ export const forgotPassword = async (req: Request, res: Response) => {
         // console.log({confirmUser})
         if (confirmUser !== null) {
             if (confirmUser.isverified) {
-                const updateOtp: [number, Model[]] = await  UserAccount.update({
-                    otp: userInput.otp,
+                const updateOtp: [number, Model[]] = await UserAccount.update({
+                    otp: await hashedPassword(userInput.otp),
                     otpdatestart: new Date(),
                     otpperiod: userInput.otpperiod,
                 }, {
@@ -277,16 +268,16 @@ export const forgotPassword = async (req: Request, res: Response) => {
             }
         }
 
-        res.send({
+        return res.send({
             message: "If you have an account with us, you will receive a mail containing authorization codes"
         })
-        return
+
 
     } catch (err) {
-        res.status(500).send({
-            message: err.message || "Some error occurred send verification"
+        return res.status(500).send({
+            message: 'Oops! '+err.message || "Some error occurred send verification"
         })
-        return
+
     }
 }
 
@@ -295,33 +286,29 @@ export const resetpassword = async (req: Request, res: Response) => {
         const userInput: UserAccountAttributes = req.body
         const user = await getUserbyEmailOrPhone(userInput)
 
-        const date = new Date
         if (typeof user !== "undefined") {
-            const timeDiff = (date.getTime() - user.otpdatestart.getTime()) / (60 * 1000)
-            if (timeDiff <= user.otpperiod) {
-                const password = await hashedPassword(userInput.password as string);
-                const updateAccount: [number, Model[]] = await UserAccount.update({ password, otpperiod: 0 }, {
-                    where: {
-                        email: userInput.email
-                    }
-                })
-                if (updateAccount[0] === 1) {
-                    res.status(201).send({
-                        message: "Password changed successfully go to api/user/login to login with your credentials!"
-                    })
-                    return
+            const password = await hashedPassword(userInput.password as string);
+            const updateAccount: [number, Model[]] = await UserAccount.update({ password, otpperiod: 0 }, {
+                where: {
+                    email: userInput.email
                 }
+            })
+            if (updateAccount[0] === 1) {
+                return res.status(201).send({
+                    message: "Password changed successfully go to api/user/login to login with your credentials!"
+                })
+
             }
         }
-        res.status(400).send({
+        return res.status(400).send({
             message: "An error occurred in reseting passwording"
         })
-        return
+
     } catch (err) {
-        res.status(500).send({
-            message: err.message || "Some error occurred send verification"
+        return res.status(500).send({
+            message: 'Oops! '+err.message || "Some error occurred send verification"
         })
-        return
+
     }
 
 }
@@ -333,16 +320,16 @@ export const firstTimeLogin = async (req: Request, res: Response) => {
         const user: UserAccountInstance = await getUserbyEmailOrPhone(userInput)
         const confPass = authenticateUser(userInput.password as string, user.password)
         if (!user.isverified) {
-            res.status(400).send({
+            return res.status(400).send({
                 message: "oops! You have not been verified yet"
             })
-            return
+
         }
         else if (!user.firsttimelogin) {
-            res.status(400).send({
+            return res.status(400).send({
                 message: "this API is just for first time users who haven't update their credentials"
             })
-            return
+
         }
         else if (confPass) {
             userInput.accountnumber = await generateAccountNumber()
@@ -351,7 +338,7 @@ export const firstTimeLogin = async (req: Request, res: Response) => {
             const updatedUser: [number, Model[]] = await UserAccount.update({
                 firsttimelogin: false,
                 accountnumber: userInput.accountnumber,
-                pin: userInput.pin,
+                pin: await hashedPassword(userInput.pin as string),
                 balance: +balance,
                 openingbalance: +openingbalance
             }, {
@@ -367,7 +354,8 @@ export const firstTimeLogin = async (req: Request, res: Response) => {
                         userId: user.id,
                         desscription: 'Opening account',
                         transactiotype: 'credit',
-                        balanceAsAtTransfer: userInput.balance
+                        balanceAsAtTransfer: userInput.balance,
+                        transactiontype: 'credit'
                     })
                 }
                 await sendMail({
@@ -375,22 +363,20 @@ export const firstTimeLogin = async (req: Request, res: Response) => {
                     subject: "Account number created",
                     text: `${user.email} congratulations your account number is ${userInput.accountnumber}`
                 })
-                res.status(201).send({
+                return res.status(201).send({
                     message: `Congrats check your mail for your account number `
                 })
-                return
+
             }
-            res.status(400).send({
+            return res.status(400).send({
                 message: "An error occurred"
             })
-            return
+
         }
-
-
     } catch (err) {
-        res.status(500).send({
-            message: err.message || "An error occurred"
+        return res.status(500).send({
+            message: 'Oops! '+err.message || "An error occurred"
         })
-        return
+
     }
 }

@@ -70,7 +70,7 @@ const UserAccountFactory = (sequelize: Sequelize) => {
         isverified: BOOLEAN,
         accountnumber: STRING(10),
         firsttimelogin: BOOLEAN,
-        pin: STRING(4),
+        pin: STRING,
         createdAt: {
             type:DATE,
             allowNull: false

@@ -57,7 +57,8 @@ const TransactionFactory = (sequelize: Sequelize) => {
         // associations can be defined here
         Transaction.belongsTo(models.UserAccount, {
             foreignKey: "userId",
-            onDelete: "CASCADED"
+            onDelete: "CASCADED",
+            as: 'user'
         })
 
     };

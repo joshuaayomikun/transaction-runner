@@ -61,9 +61,21 @@ export const generateAccountNumber = async () => {
 
 }
 
-export const hashedPassword = async(password : string) => {
+export const hashedPassword = async (password: string) => {
     const salt = await bcrypt.genSalt(10);
     const newpassword = await bcrypt.hash(password, salt);
 
     return newpassword
+}
+
+export const getUserByAccount = async (accountnumber: string) => {
+    // console.log({accountnumber})
+    const user: UserAccountInstance = await UserAccount.findOne({
+        where: {
+            accountnumber
+        }
+    })
+
+    return user
+
 }
