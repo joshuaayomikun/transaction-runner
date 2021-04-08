@@ -317,15 +317,17 @@ export const firstTimeLogin = async (req: Request, res: Response) => {
     try {
 
         const userInput: UserAccountAttributes = req.body
-        const user: UserAccountInstance = await getUserbyEmailOrPhone(userInput)
-        const confPass = authenticateUser(userInput.password as string, user.password)
-        if (!user.isverified) {
+        // console.log({userInput})
+        const confUser: UserAccountInstance = await getUserbyEmailOrPhone(userInput)
+        // console.log({confUser})
+        const confPass = authenticateUser(userInput.password as string, confUser.password)
+        if (!confUser.isverified) {
             return res.status(400).send({
                 message: "oops! You have not been verified yet"
             })
 
         }
-        else if (!user.firsttimelogin) {
+        else if (!confUser.firsttimelogin) {
             return res.status(400).send({
                 message: "this API is just for first time users who haven't update their credentials"
             })
@@ -351,17 +353,17 @@ export const firstTimeLogin = async (req: Request, res: Response) => {
                 if (balance > 0) {
                     await Transaction.create({
                         amount: balance,
-                        userId: user.id,
-                        desscription: 'Opening account',
+                        userId: confUser.id,
+                        description: 'Opening account',
                         transactiotype: 'credit',
-                        balanceAsAtTransfer: userInput.balance,
+                        balanceAfterTransaction: +balance,
                         transactiontype: 'credit'
                     })
                 }
                 await sendMail({
-                    to: user.email,
+                    to: confUser.email,
                     subject: "Account number created",
-                    text: `${user.email} congratulations your account number is ${userInput.accountnumber}`
+                    text: `${confUser.email} congratulations your account number is ${userInput.accountnumber}`
                 })
                 return res.status(201).send({
                     message: `Congrats check your mail for your account number `
@@ -373,6 +375,9 @@ export const firstTimeLogin = async (req: Request, res: Response) => {
             })
 
         }
+        return res.status(400).send({
+            message: "Invalid email or password"
+        })
     } catch (err) {
         return res.status(500).send({
             message: 'Oops! '+err.message || "An error occurred"

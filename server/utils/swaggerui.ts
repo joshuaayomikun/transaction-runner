@@ -268,6 +268,11 @@ const options = {
         },
         "/api/user/{userId}/continueregistration": {
             "put": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
                 "x-swagger-router-controller": "home",
                 "operationId": "continueregistration",
                 "tags": ["User"],

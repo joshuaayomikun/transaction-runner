@@ -5,9 +5,9 @@ import bcrypt from 'bcrypt'
 const { UserAccount } = Models
 
 export const getUserbyEmailOrPhone = async (userInput: UserAccountAttributes) => {
-
+    // console.log({userInput})
     if (typeof userInput.phonenumber !== "undefined") {
-        const user = await UserAccount.findOne({
+        const confUser = await UserAccount.findOne({
             where: {
                 [Op.or]: [
                     { email: userInput.email },
@@ -16,17 +16,18 @@ export const getUserbyEmailOrPhone = async (userInput: UserAccountAttributes) =>
             }
         })
 
-        return user
+        return confUser
     }
     else {
-        const user = await UserAccount.findOne({
+        const confUser = await UserAccount.findOne({
             where:
             {
                 email: userInput.email
 
             }
         })
-        return user
+        console.log({userInput})
+        return confUser
     }
 }
 

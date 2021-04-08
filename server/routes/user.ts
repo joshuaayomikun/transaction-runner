@@ -12,7 +12,7 @@ const User = (app: any) => {
             body("firstname").not().isEmpty(),
             body("lastname").not().isEmpty()
         ], validateEntries, createUser)
-    router.post("/:userId/confirmtoken",
+    router.put("/:userId/confirmtoken",
         body('token').isLength({ min: 6, max: 6 }),
         validateEntries, confirmOTP)
     router.post("/resendverification",

@@ -13,73 +13,65 @@ export const transfertTOAnotherAccount = async (req: Request, res: Response) => 
         const { amount, user, description, transactiontype, accountnumber, receiver } = req.body
 
         const confUser: UserAccountInstance = await getUserByAccount(accountnumber)
-        if (confUser.balance >= amount) {
-            const transction: TransactionsInstance = await Transaction.create({
-                transactiontype,
-                description,
-                userId: confUser.id,
-                amount,
-                balanceAfterTransaction: transactiontype.toLowerCase() === 'debit' ? confUser.balance - amount : confUser.balance + amount
-            })
-            if (transction !== null) {
-                const transactionUser: [number, Model[]] = await UserAccount.update(
-                    { balance: transction.balanceAfterTransaction },
-                    {
-                        where: {
-                            id: confUser.id
-                        }
+        const transction: TransactionsInstance = await Transaction.create({
+            transactiontype,
+            description,
+            userId: confUser.id,
+            amount,
+            balanceAfterTransaction: transactiontype.toLowerCase() === 'debit' ? confUser.balance - amount : confUser.balance + amount
+        })
+        if (transction !== null) {
+            const transactionUser: [number, Model[]] = await UserAccount.update(
+                { balance: transction.balanceAfterTransaction },
+                {
+                    where: {
+                        id: confUser.id
                     }
-                )
-                if (transactionUser[0] === 1) {
-                    const status = transactiontype === "credit" ? "debit" : 'credit'
-                    const receiverConfUser: UserAccountInstance = await getUserByAccount(receiver)
-                    const receiverTransction: TransactionsInstance = await Transaction.create({
-                        transactiontype: status,
-                        description,
-                        userId: receiverConfUser.id,
-                        amount,
-                        balanceAfterTransaction: transactiontype.toLowerCase() === 'debit' ? receiverConfUser.balance + amount : receiverConfUser.balance - amount
-                    })
-                    if (receiverTransction !== null) {
-                        const receiverTransactionUser: [number, Model[]] = await UserAccount.update(
-                            { balance: receiverTransction.balanceAfterTransaction },
-                            {
-                                where: {
-                                    id: receiverConfUser.id
-                                }
+                }
+            )
+            if (transactionUser[0] === 1) {
+                const status = transactiontype === "credit" ? "debit" : 'credit'
+                const receiverConfUser: UserAccountInstance = await getUserByAccount(receiver)
+                const receiverTransction: TransactionsInstance = await Transaction.create({
+                    transactiontype: status,
+                    description,
+                    userId: receiverConfUser.id,
+                    amount,
+                    balanceAfterTransaction: transactiontype.toLowerCase() === 'debit' ? receiverConfUser.balance + amount : receiverConfUser.balance - amount
+                })
+                if (receiverTransction !== null) {
+                    const receiverTransactionUser: [number, Model[]] = await UserAccount.update(
+                        { balance: receiverTransction.balanceAfterTransaction },
+                        {
+                            where: {
+                                id: receiverConfUser.id
                             }
-                        )
-                        if(receiverTransactionUser[0] === 1)
+                        }
+                    )
+                    if (receiverTransactionUser[0] === 1)
                         return res.status(200).send({
                             message: "Congrats Transaction successful"
                         })
-                        else {
-                            const reversalReceiverTransction: TransactionsInstance = await Transaction.create({
-                                transactiontype: status === "credit" ? "debit" : 'credit',
-                                description,
-                                userId: receiverConfUser.id,
-                                amount,
-                                balanceAfterTransaction: receiverConfUser.balance
-                            })
-                        }
+                    else {
+                        const reversalReceiverTransction: TransactionsInstance = await Transaction.create({
+                            transactiontype: status === "credit" ? "debit" : 'credit',
+                            description: "creedit reversal",
+                            userId: receiverConfUser.id,
+                            amount,
+                            balanceAfterTransaction: receiverConfUser.balance
+                        })
                     }
-                } else {
-                    const status = transactiontype === "credit" ? "debit" : 'credit'
-                    const transction: TransactionsInstance = await Transaction.create({
-                        transactiontype: status,
-                        description: "reversal",
-                        userId: confUser.id,
-                        amount,
-                        balanceAfterTransaction: confUser.balance
-                    })
                 }
+            } else {
+                const status = transactiontype === "credit" ? "debit" : 'credit'
+                const transction: TransactionsInstance = await Transaction.create({
+                    transactiontype: status,
+                    description: "debit reversal",
+                    userId: confUser.id,
+                    amount,
+                    balanceAfterTransaction: confUser.balance
+                })
             }
-
-        } else {
-            return res.status(400).send({
-                message: "Oops! You have insufficient funds to complete this transaction"
-            })
-
         }
         return res.status(400).send({
             message: "Oops! Unable to complete this transaction"
@@ -148,7 +140,7 @@ export const getAllTransactions = async (req: Request, res: Response) => {
             include: ['user']
         })
         // console.log({allTransactions})
-        if( allTransactions !== null) {
+        if (allTransactions !== null) {
             res.status(200).json(
                 allTransactions
             )
@@ -167,14 +159,14 @@ export const getAllTransactions = async (req: Request, res: Response) => {
 
 export const getTransactionsByUser = async (req: Request, res: Response) => {
     try {
-        const {userId} = req.params
+        const { userId } = req.params
         const userTransaction = await UserAccount.findAll({
-            where: {id:userId},
+            where: { id: userId },
             include: ['transactions']
 
-        }) 
+        })
         // console.log({userTransaction})
-        if( userTransaction !== null) {
+        if (userTransaction !== null) {
             res.status(200).json(
                 userTransaction
             )

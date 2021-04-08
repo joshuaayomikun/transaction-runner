@@ -1,16 +1,30 @@
 import nodemailer from 'nodemailer'
+import Mail from 'nodemailer/lib/mailer'
 
 // console.log({
 //     GMAIL_USER: process.env['GMAIL_USER'],
 //     GMAIL_PASSWORD: process.env.GMAIL_PASSWORD
 // })
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_PASSWORD
-    }
-})
+let transporter: Mail;
+if(process.env.MAIL_SERVICE?.toLowerCase() === 'gmail'){
+    transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: process.env.MAIL_USER,
+            pass: process.env.MAIL_PASSWORD
+        }
+    })
+} else {
+        transporter = nodemailer.createTransport({
+            host: process.env.SMTP_HOST,
+            port: parseInt(process.env.SMTP_PORT as string),
+            secure: false, // true for 465, false for other ports
+            auth: {
+                user: process.env.MAIL_USER,
+                pass: process.env.MAIL_PASSWORD
+            }
+        })
+}
 
 interface IMailOptions {
     from?: string;
@@ -19,9 +33,13 @@ interface IMailOptions {
     text: string;
 };
 const sendMail = async (mailOptions: IMailOptions) => {
-    mailOptions.from = process.env.GMAIL_USER
-    const info = await transporter.sendMail(mailOptions);
-    return info
+    if(process.env.USER_MAIL?.toLowerCase() === 'yes'){
+        if(typeof mailOptions.from === "undefined" || mailOptions.from === ""){
+            mailOptions.from = process.env.MAIL_USER
+        }
+        const info = await transporter.sendMail(mailOptions);
+        return info
+    }
 }
 
 export default sendMail
