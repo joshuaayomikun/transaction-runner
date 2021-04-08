@@ -2,7 +2,9 @@ import { Model, Op } from 'sequelize'
 import Models from '../models'
 import { UserAccountAttributes, UserAccountInstance } from '../models/useraccount'
 import bcrypt from 'bcrypt'
-const { UserAccount } = Models
+import { TransactionsInstance } from '../models/transaction'
+import sendMail from '../mail'
+const { UserAccount, Transaction } = Models
 
 export const getUserbyEmailOrPhone = async (userInput: UserAccountAttributes) => {
     // console.log({userInput})
@@ -26,7 +28,7 @@ export const getUserbyEmailOrPhone = async (userInput: UserAccountAttributes) =>
 
             }
         })
-        console.log({userInput})
+        console.log({ userInput })
         return confUser
     }
 }
@@ -79,4 +81,59 @@ export const getUserByAccount = async (accountnumber: string) => {
 
     return user
 
+}
+
+export const makeNewTransaction = async (transactiontype: string, accountnumber: string, description: string = "", amount: number) => {
+    const user: UserAccountInstance = await getUserByAccount(accountnumber)
+    let balanceAfterTransaction: number = 0;
+    if (transactiontype.toLowerCase() === "debit")
+        balanceAfterTransaction = user.balance - amount
+    else if (transactiontype.toLowerCase() === "credit")
+        balanceAfterTransaction = user.balance + amount
+    const transaction: TransactionsInstance = await Transaction.create({
+        transactiontype,
+        description,
+        userId: user.id,
+        amount,
+        balanceAfterTransaction
+    })
+    if(transaction !== null) {
+        await sendMail({
+            to: user.email,
+            text: `A ${transactiontype} transaction of ${amount} was made on your account your new balance is ${balanceAfterTransaction}`,
+            subject: "Transactin notification"
+        })
+    }
+    return transaction
+}
+
+export const reverseTransaction = async (transactiontype: string, accountnumber: string, description: string = "", amount: number) => {
+    const user: UserAccountInstance = await getUserByAccount(accountnumber)
+    const transaction: TransactionsInstance = await Transaction.create({
+        transactiontype: transactiontype.toLowerCase() === "debit" ? 'credit' : 'debit',
+        description: description + ' reversal',
+        userId: user.id,
+        amount,
+        balanceAfterTransaction: user.balance
+    })
+    if(transaction !== null) {
+        await sendMail({
+            to: user.email,
+            text: `A ${transactiontype.toLowerCase() === "debit" ? 'credit' : 'debit'} reversal of ${amount} was made on your account`,
+            subject: "Transactin notification"
+        })
+    } 
+    return transaction
+}
+
+export const updateUserTransaction = async (accountnumber: string, balance: number) => {
+
+    const updateUser: [number, Model[]] = await UserAccount.update({
+        balance
+    }, {
+        where: {
+            accountnumber
+        }
+    })
+    return updateUser
 }

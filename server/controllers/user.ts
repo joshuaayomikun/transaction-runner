@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { getUserbyEmailOrPhone, authenticateUser, generateAccountNumber, hashedPassword } from "../utils";
+import { getUserbyEmailOrPhone, authenticateUser, generateAccountNumber, hashedPassword, makeNewTransaction } from "../utils";
 import Models from '../models'
 import { UserAccountAttributes, UserAccountInstance } from "../models/useraccount";
 import sendMail from "../mail";
@@ -351,14 +351,7 @@ export const firstTimeLogin = async (req: Request, res: Response) => {
 
             if (updatedUser[0] === 1) {
                 if (balance > 0) {
-                    await Transaction.create({
-                        amount: balance,
-                        userId: confUser.id,
-                        description: 'Opening account',
-                        transactiotype: 'credit',
-                        balanceAfterTransaction: +balance,
-                        transactiontype: 'credit'
-                    })
+                    await makeNewTransaction('credit', confUser.accountnumber, 'Opening account', +balance)
                 }
                 await sendMail({
                     to: confUser.email,

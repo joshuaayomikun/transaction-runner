@@ -5,72 +5,32 @@ import { TransactionsAttributes, TransactionsInstance } from "../models/transact
 import Models from "../models";
 import { UserAccountInstance } from "../models/useraccount";
 import { Model } from "sequelize/types";
-import { getUserByAccount } from "../utils";
+import { getUserByAccount, makeNewTransaction, updateUserTransaction, reverseTransaction } from "../utils";
+import sendMail from "../mail";
 
 const { Transaction, UserAccount } = Models
 export const transfertTOAnotherAccount = async (req: Request, res: Response) => {
     try {
         const { amount, user, description, transactiontype, accountnumber, receiver } = req.body
-
-        const confUser: UserAccountInstance = await getUserByAccount(accountnumber)
-        const transction: TransactionsInstance = await Transaction.create({
-            transactiontype,
-            description,
-            userId: confUser.id,
-            amount,
-            balanceAfterTransaction: transactiontype.toLowerCase() === 'debit' ? confUser.balance - amount : confUser.balance + amount
-        })
-        if (transction !== null) {
-            const transactionUser: [number, Model[]] = await UserAccount.update(
-                { balance: transction.balanceAfterTransaction },
-                {
-                    where: {
-                        id: confUser.id
-                    }
-                }
-            )
+        const transaction: TransactionsInstance = await makeNewTransaction(transactiontype, accountnumber, description, amount)
+        if (transaction !== null) {
+            const transactionUser: [number, Model[]] = await updateUserTransaction(accountnumber, transaction.balanceAfterTransaction)
             if (transactionUser[0] === 1) {
                 const status = transactiontype === "credit" ? "debit" : 'credit'
-                const receiverConfUser: UserAccountInstance = await getUserByAccount(receiver)
-                const receiverTransction: TransactionsInstance = await Transaction.create({
-                    transactiontype: status,
-                    description,
-                    userId: receiverConfUser.id,
-                    amount,
-                    balanceAfterTransaction: transactiontype.toLowerCase() === 'debit' ? receiverConfUser.balance + amount : receiverConfUser.balance - amount
-                })
-                if (receiverTransction !== null) {
-                    const receiverTransactionUser: [number, Model[]] = await UserAccount.update(
-                        { balance: receiverTransction.balanceAfterTransaction },
-                        {
-                            where: {
-                                id: receiverConfUser.id
-                            }
-                        }
-                    )
-                    if (receiverTransactionUser[0] === 1)
+                const receivertransaction = await makeNewTransaction(status, receiver, description, amount)
+                if (receivertransaction !== null) {
+                    const receiverTransactionUser: [number, Model[]] = await updateUserTransaction(receiver, receivertransaction.balanceAfterTransaction)
+                    if (receiverTransactionUser[0] === 1){
                         return res.status(200).send({
                             message: "Congrats Transaction successful"
                         })
+                    }
                     else {
-                        const reversalReceiverTransction: TransactionsInstance = await Transaction.create({
-                            transactiontype: status === "credit" ? "debit" : 'credit',
-                            description: "creedit reversal",
-                            userId: receiverConfUser.id,
-                            amount,
-                            balanceAfterTransaction: receiverConfUser.balance
-                        })
+                        await reverseTransaction(status, receiver, description, amount)
                     }
                 }
             } else {
-                const status = transactiontype === "credit" ? "debit" : 'credit'
-                const transction: TransactionsInstance = await Transaction.create({
-                    transactiontype: status,
-                    description: "debit reversal",
-                    userId: confUser.id,
-                    amount,
-                    balanceAfterTransaction: confUser.balance
-                })
+                await reverseTransaction(transactiontype, accountnumber, description, amount)
             }
         }
         return res.status(400).send({
@@ -84,41 +44,22 @@ export const transfertTOAnotherAccount = async (req: Request, res: Response) => 
 
     }
 }
+
 export const makePayment = async (req: Request, res: Response) => {
     try {
         const { amount, user, description, transactiontype, accountnumber } = req.body
 
         const confUser: UserAccountInstance = await getUserByAccount(accountnumber)
-        const transction: TransactionsInstance = await Transaction.create({
-            transactiontype,
-            description,
-            userId: confUser.id,
-            amount,
-            balanceAfterTransaction: transactiontype.toLowerCase() === 'debit' ? confUser.balance - amount : confUser.balance + amount
-        })
-        if (transction !== null) {
-            const transactionUser = await UserAccount.update(
-                { balance: transction.balanceAfterTransaction },
-                {
-                    where: {
-                        id: confUser.id
-                    }
-                }
-            )
+        const transaction: TransactionsInstance = await makeNewTransaction(transactiontype, accountnumber, description, amount)
+        if (transaction !== null) {
+            const transactionUser = await updateUserTransaction(accountnumber, transaction.balanceAfterTransaction)
             if (transactionUser[0] === 1) {
                 return res.status(201).send({
                     message: "Congrats Transaction successful"
                 })
 
             } else {
-                const status = transactiontype === "credit" ? "debit" : 'credit'
-                const reversalTransction: TransactionsInstance = Transaction.create({
-                    transactiontype: status,
-                    description: "reversal",
-                    userId: confUser.id,
-                    amount,
-                    balanceAfterTransaction: confUser.balance
-                })
+                const reversaltransaction: TransactionsInstance = await reverseTransaction(transactiontype,accountnumber, description, amount)
             }
         }
 
