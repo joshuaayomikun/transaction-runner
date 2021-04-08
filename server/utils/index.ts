@@ -7,7 +7,7 @@ import sendMail from '../mail'
 const { UserAccount, Transaction } = Models
 
 export const getUserbyEmailOrPhone = async (userInput: UserAccountAttributes) => {
-    // console.log({userInput})
+    //   // console.log({UserAccount})
     if (typeof userInput.phonenumber !== "undefined") {
         const confUser = await UserAccount.findOne({
             where: {
@@ -17,6 +17,7 @@ export const getUserbyEmailOrPhone = async (userInput: UserAccountAttributes) =>
                 ]
             }
         })
+
 
         return confUser
     }
@@ -28,7 +29,7 @@ export const getUserbyEmailOrPhone = async (userInput: UserAccountAttributes) =>
 
             }
         })
-        console.log({ userInput })
+        //   // console.log({ userInput })
         return confUser
     }
 }

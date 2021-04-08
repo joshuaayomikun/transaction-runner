@@ -1,6 +1,6 @@
 
 import * as dotenv from 'dotenv';
-dotenv.config({path: __dirname + '/.env'})
+dotenv.config()
 
 import express from 'express'
 import logger from 'morgan'
@@ -26,8 +26,6 @@ app.use(
 );
 
 
-app.get("*", (req, res) => res.status(200).send({
-    message: 'welcome to the beginning of nothingness'
-}))
+app.get("*", (req, res) => res.redirect('/api-docs'))
 
  export default app;
