@@ -1,11 +1,13 @@
 {
   "development": {
-    "username": "postgres",
-    "password": "mysecretpassword",
-    "database": "transaction-runner",
-    "host": "localhost",
-    "port": 5432,
-    "dialect": "postgres"
+    "url":"put your url",
+    "dialect": "postgres",
+    "dialectOptions": {
+      "ssl": {
+          "require": true,
+          "rejectUnauthorized": false
+      }
+  }
   },
   "test": {
     "username": "postgres",

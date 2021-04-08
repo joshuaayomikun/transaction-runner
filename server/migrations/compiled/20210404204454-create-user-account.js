@@ -20,7 +20,7 @@ exports.default = {
                 type: sequelize_1.DOUBLE
             },
             otp: {
-                type: sequelize_1.STRING(6)
+                type: sequelize_1.STRING
             },
             otpdatestart: {
                 type: sequelize_1.DATE
@@ -52,7 +52,7 @@ exports.default = {
                 defaultValue: true
             },
             pin: {
-                type: sequelize_1.STRING(4)
+                type: sequelize_1.STRING
             },
             createdAt: {
                 allowNull: false,

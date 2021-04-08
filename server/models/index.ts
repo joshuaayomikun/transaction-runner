@@ -2,13 +2,11 @@ import { Sequelize } from "sequelize-typescript";
 import { Model, Op } from "sequelize";
 import fs from 'fs'
 import path from 'path'
-
+import config from "../config/config";
 const basename = path.basename(__filename);
-const env = process.env.NODE_ENV || 'development';
-const config = require(__dirname + '/../config/config.json')[env];
 const db: any = {};
 
-let sequelize = new Sequelize(config.database, config.username, config.password, config);
+let sequelize = new Sequelize(config.development.url as string, config.development.dialect);
 
 fs
   .readdirSync(__dirname)

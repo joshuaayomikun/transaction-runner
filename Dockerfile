@@ -1,6 +1,6 @@
 FROM node:15
 
-WORKDIR /
+WORKDIR /app
 
 # Install app dependencies
 # A wildcard is used to ensure both package.json AND package-lock.json are copied
@@ -16,6 +16,6 @@ RUN npm ci --quiet && npm run build
 # RUN npm ci --only=production
 
 
-EXPOSE 8080
+EXPOSE 8000
 
 CMD [ "node", "./build/bin/www.js"]
