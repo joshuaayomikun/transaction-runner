@@ -3,12 +3,13 @@
   "version": "1.0.0",
   "description": "",
   "main": "./bin/www.ts",
-  "engines": {
-    "node": "14.9.0",
-    "npm": "6.14.8"
+  "engines" : { 
+    "node" : "15.x",
+    "npm": "7.x"
   }, 
   "scripts": {
     "start:dev": "nodemon ./bin/www",
+    "start": "node ./build/bin/www",
     "build": "tsc --project ./",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
