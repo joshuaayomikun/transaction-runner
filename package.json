@@ -2,14 +2,14 @@
   "name": "tansaction-runner",
   "version": "1.0.0",
   "description": "",
-  "main": "./bin/www.ts",
-  "engines" : { 
-    "node" : "15.x",
+  "main": "./build/bin/www",
+  "engines": {
+    "node": "15.x",
     "npm": "7.x"
-  }, 
+  },
   "scripts": {
-    "start:dev": "nodemon ./bin/www",
-    "start": "node ./build/bin/www",
+    "start:dev": "nodemon",
+    "start": "node",
     "build": "tsc --project ./",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
