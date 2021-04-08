@@ -1,4 +1,4 @@
-import { Sequelize } from "sequelize-typescript";
+import { Sequelize } from "sequelize";
 import { Model, Op } from "sequelize";
 import fs from 'fs'
 import path from 'path'
@@ -6,7 +6,7 @@ import config from "../config/config";
 const basename = path.basename(__filename);
 const db: any = {};
 
-let sequelize = new Sequelize(config.development.url as string, config.development.dialect);
+let sequelize = new Sequelize(config.development.url as string, config.development as object);
 
 fs
   .readdirSync(__dirname)
