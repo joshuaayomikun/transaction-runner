@@ -3,8 +3,10 @@
   "version": "1.0.0",
   "description": "",
   "main": "./bin/www.ts",
-  "engines" : 
-    { "node" : ">=14.6.1" },
+  "engines" : { 
+    "node" : "15.x",
+    "npm": "7.x"
+  }, 
   "scripts": {
     "start:dev": "nodemon ./bin/www",
     "build": "tsc --project ./",
