@@ -5,6 +5,5 @@ run:
   web: bundle exec puma -C config/puma.rb
   worker: npm start
   command:
-    - npm
-    - start
+    - "npm start"
   image: worker
