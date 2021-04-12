@@ -33,7 +33,8 @@ interface IMailOptions {
     text: string;
 };
 const sendMail = async (mailOptions: IMailOptions) => {
-    if(process.env.USER_MAIL?.toLowerCase() === 'yes'){
+    // console.log({USE_MAIL: process.env.USE_MAIL})
+    if(process.env.USE_MAIL?.toLowerCase() === 'yes'){
         if(typeof mailOptions.from === "undefined" || mailOptions.from === ""){
             mailOptions.from = process.env.MAIL_USER
         }
