@@ -3,7 +3,7 @@ build:
     worker: Dockerfile.heroku
 run:
   web: bundle exec puma -C config/puma.rb
-  worker: npm start ./build/bin/www.js
+  worker: npm run start
   command:
-    - npm start ./build/bin/www.js
+    - npm run start
   image: worker
