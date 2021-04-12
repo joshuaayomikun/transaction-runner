@@ -2,5 +2,4 @@ build:
   docker:
     worker: Dockerfile.heroku
 run:
-  web: bundle exec puma -C config/puma.rb
-  worker: npm start
+  web: npm start
