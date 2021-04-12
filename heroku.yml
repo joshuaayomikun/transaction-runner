@@ -5,4 +5,4 @@ run:
   web: 
     command: 
       - npm start
-    image: heroku/heroku
+    image: worker
