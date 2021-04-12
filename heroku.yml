@@ -3,3 +3,4 @@ build:
     worker: Dockerfile.heroku
 run:
   web: npm start
+  image: heroku/heroku
