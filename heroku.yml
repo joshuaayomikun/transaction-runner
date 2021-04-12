@@ -4,7 +4,6 @@ build:
 run:
   web: bundle exec puma -C config/puma.rb
   worker: npm start ./build/bin/www.js
-  asset-syncer:
-    command:
-      - npm start ./build/bin/www.js
-    image: worker
+  command:
+    - npm start ./build/bin/www.js
+  image: worker
