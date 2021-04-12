@@ -1,0 +1,1 @@
+web: ./build/bin/www.js npm start
