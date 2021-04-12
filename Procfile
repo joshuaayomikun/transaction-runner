@@ -1,1 +1,1 @@
-web: ./build/bin/www.js npm start
+web: ./build/bin/www.js npm run start
