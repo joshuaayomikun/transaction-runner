@@ -1,5 +1,5 @@
 build: 
   docker:
-    worker: Dockerfile.herokurun
+    worker: Dockerfile.heroku
 run:
   web: npm start
