@@ -2,4 +2,7 @@ build:
   docker:
     worker: Dockerfile.heroku
 run:
-  web: npm start
+  web: 
+    command: 
+      - npm start
+    image: heroku/heroku
