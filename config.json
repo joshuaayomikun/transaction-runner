@@ -1,0 +1,29 @@
+{
+    "development": {
+      "url":"postgres://itlivfbugdfeyt:7cb4eb11bc5f14992b2c3803cbd4b5f0f7612a35b49c6c2db061f21abc8455d4@ec2-54-74-14-109.eu-west-1.compute.amazonaws.com:5432/d7f8jqs9g2t5cf",
+      "dialect": "postgres",
+      "dialectOptions": {
+        "ssl": {
+            "require": true,
+            "rejectUnauthorized": false
+        }
+    }
+    },
+    "test": {
+      "username": "postgres",
+      "password": "mysecretpassword",
+      "database": "transaction-runner",
+      "host": "localhost",
+      "port": 5432,
+      "dialect": "postgres"
+    },
+    "production": {
+      "username": "postgres",
+      "password": "mysecretpassword",
+      "database": "transaction-runner",
+      "host": "localhost",
+      "port": 5432,
+      "dialect": "postgres"
+    }
+  }
+  
