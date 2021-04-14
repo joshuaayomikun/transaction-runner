@@ -17,6 +17,7 @@ This is an api project developed with nodejs and typescript as the programming l
     - USE_MAIL=THIS_VALUE_SHOULD_BE_YES_OR_NO(**MUST BE YES TO RECEIVE MAIL**)
     - PORT=ENTER_THE_PORT_YOUR_APP_SHOULD_USE
     - DEV_HOST=locahhost
+    - DEV_DATABASE_URL=ENTER_YOUR_DEV_DATABASE_URL
     - PRODUCTION_HOST=ENTER_YOUR_HOST_HERE
 - If you do not want to use gmail and you do not have an smtp server use this [example smtp](https://nodemailer.com/about/#example) 
 - Run `npm run build`
