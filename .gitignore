@@ -15,3 +15,5 @@ yarn-error.log*
 
 server/migrations/compiled/
 server/config/config.json
+
+.DS_Store
