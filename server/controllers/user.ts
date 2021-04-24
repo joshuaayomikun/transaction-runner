@@ -27,6 +27,7 @@ export const createUser = async (req: Request, res: Response) => {
         // newUser.save()
         if (typeof newUser !== "undefined") {
             await sendMail({
+                from: "joshua@joshuaayomikun.com",
                 to: userInput.email as string,
                 subject: "Account Creation",
                 text: `Congratutions on your account opening, your otp is ${otp} copy your otp to your confirmation page to continue. Take note your otp expires after ${userInput.otpperiod} minues. use api/user/${newUser.id}/confirmtoken, send token as the body`
