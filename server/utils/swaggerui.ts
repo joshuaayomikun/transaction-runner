@@ -3,7 +3,7 @@ import { baseurl } from "./config";
 const options = {
     "swagger": "2.0",
     "info": {
-        "title": "Transaction runner",
+        "title": "Transaction runners",
         "description": "",
         "version": "1.0"
     },
